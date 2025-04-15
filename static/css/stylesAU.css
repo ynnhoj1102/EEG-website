@@ -1,0 +1,380 @@
+:root {
+  --primary: #2A4E6E;
+  --secondary: #5B86E5;
+  --accent: #4CAF50;
+  --text: #2D3748;
+  --background: #F8FAFC;
+  --surface: #FFFFFF;
+  --error: #E53E3E;
+  --success: #38A169;
+  --warning: #DD6B20;
+  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+body {
+  background: linear-gradient(
+    135deg,
+    #83b2e1 0%,
+    #e9ecef 50%,
+    #f8f9fa 100%
+  );
+  position: relative;
+  min-height: 100vh;
+  color: var(--text);
+  line-height: 1.6;
+  min-height: 100vh;
+  padding: 2rem;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: 
+    linear-gradient(rgba(0,0,0,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,0,0,0.03) 1px, transparent 1px);
+  background-size: 20px 20px;
+  z-index: -1;
+  pointer-events: none;
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  width: 150vw;
+  height: 150vh;
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(91, 134, 229, 0.08) 0%,
+    rgba(255,255,255,0) 60%
+  );
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: -2;
+}
+
+.header {
+  background: linear-gradient(135deg, var(--primary), #1A365D);
+  color: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  margin-bottom: 2rem;
+  box-shadow: var(--shadow);
+  position: relative;
+  overflow: hidden;
+}
+
+.header::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--secondary), var(--accent));
+}
+
+.header h1 {
+  font-size: 2.5rem;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.header img {
+  width: 60px;
+  height: 60px;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+}
+
+.container {
+  background: rgba(255,255,255,0.92);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,0.3);
+}
+
+.nav-buttons {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 1px;
+  background: rgba(255,255,255,0.85);
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(255,255,255,0.3);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  margin-bottom: 2rem;
+}
+
+.nav-buttons button {
+  background: var(--surface);
+  color: var(--text);
+  padding: 1rem;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  font-weight: 500;
+  position: relative;
+}
+
+.nav-buttons button:hover {
+  background: var(--secondary);
+  color: white;
+  transform: translateY(-2px);
+}
+
+.nav-buttons button:hover::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60%;
+  height: 3px;
+  background: var(--accent);
+  border-radius: 2px;
+}
+
+.content {
+  display: flex;
+  background: linear-gradient(145deg, #a9f1c8, #a595f5);
+}
+
+
+.main-info {
+  flex: 3;
+  padding: 20px;
+}
+
+.introduction-title {
+  text-align: center;
+  font-size: 36px; /* Increase font size for introduction title */
+  background-color: #ffcccc; /* Custom background color for introduction title */
+  padding: 20px;
+}
+
+.introduction-content {
+  text-align: center;
+  font-size: 24px; /* Increase font size for introduction content */
+  background-color: #cceeff; /* Custom background color for introduction content */
+  padding: 20px;
+}
+
+h2 {
+  margin-bottom: 10px;
+  font-size: 30px; /* Increase font size for Information Section heading */
+  background-color: #f6e5e5; /* Own color background */
+  padding: 10px;
+}
+
+h3 {
+  padding: 10px;
+  font-size: 32px; /* Increase font size for each h3 heading */
+}
+
+h3:nth-of-type(1),
+h3:nth-of-type(1) + p {
+  background-color: #e4f7f6; /* Light blue background for Alzheimer's information */
+}
+
+h3:nth-of-type(2),
+h3:nth-of-type(2) + p {
+  background-color: #fff3c2; /* Light yellow background for Multiple Sclerosis information */
+}
+
+h3:nth-of-type(3),
+h3:nth-of-type(3) + p {
+  background-color: #f9dbe9; /* Light pink background for Dementia information */
+}
+
+h3:nth-of-type(4),
+h3:nth-of-type(4) + p {
+  background-color: #c9c1ff; /* Light purple background for Parkinson's information */
+}
+
+h3:nth-of-type(5),
+h3:nth-of-type(5) + p {
+  background-color: #e4f7f6; /* Light blue background for Alzheimer's information */
+}
+
+h3:nth-of-type(6),
+h3:nth-of-type(6) + p {
+  background-color: #fff3c2; /* Light yellow background for Multiple Sclerosis information */
+}
+
+h3:nth-of-type(7),
+h3:nth-of-type(7) + p {
+  background-color: #f9dbe9; /* Light pink background for Dementia information */
+}
+
+h3:nth-of-type(8),
+h3:nth-of-type(8) + p {
+  background-color: #c9c1ff; /* Light purple background for Parkinson's information */
+}
+
+p {
+  font-size: 18px; /* Increase font size for paragraphs */
+  padding: 10px;
+}
+
+@keyframes profileAnimation {
+  0% {
+    transform: translateY(25%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.profile.intro{
+  display: flex;
+  margin-bottom: 20px;
+  border-radius: 5px;
+  text-align: center;
+  background-color: #f8f8f8; /* Default background color for profile paddings */
+  animation: profileAnimation 0.5s ease-in-out forwards;
+  opacity: 0;
+}
+
+
+.profile {
+  display: flex;
+  margin-bottom: 20px;
+  border-radius: 5px;
+  background-color: #f8f8f8; /* Default background color for profile paddings */
+  animation: profileAnimation 0.5s ease-in-out forwards;
+  opacity: 0;
+}
+
+.profile:nth-of-type(1) {
+  animation-delay: 0s; /* Delay for the first profile */
+}
+
+.profile:nth-of-type(2) {
+  animation-delay: 0.5s; /* Delay for the second profile */
+}
+
+.profile:nth-of-type(3) {
+  animation-delay: 1s; /* Delay for the third profile */
+}
+
+.profile:nth-of-type(4) {
+  animation-delay: 1.5s; /* Delay for the fourth profile */
+}
+
+.profile:nth-of-type(5) {
+  animation-delay: 2s; /* Delay for the fifth profile */
+}
+
+.profile:nth-of-type(6) {
+  animation-delay: 2.5s; /* Delay for the fifth profile */
+}
+  
+.profile h2 {
+  border-radius: 8px;
+}
+
+.profile img {
+  width: 200px;
+  height: auto;
+  margin-right: 20px;
+}
+
+.profile.reverse {
+  flex-direction: row-reverse;
+}
+
+.intro>.info{
+  padding-left: 50px;
+}
+
+.info {
+  flex: 1;
+  padding-right: 50px; /* Added padding to prevent text overlap with the photo */
+}
+
+.reverse>.info {
+  flex: 1;
+  padding-right: 100px; /* Added padding to prevent text overlap with the photo */
+}
+
+.profile:nth-of-type(1) {
+  background-color: #f6e293; /* Yellow background for first h2 */
+}
+
+.profile:nth-of-type(2) {
+  background-color: #96f39a; /* Green background for second h2 */
+}
+
+.profile:nth-of-type(3) {
+  background-color: #96c8f0; /* Blue background for third h2 */
+}
+
+.profile:nth-of-type(4) {
+  background-color: #f0a1bc; /* Pink background for fourth h2 */
+}
+
+.profile:nth-of-type(5) {
+  background-color: #efaafb; /* Purple background for fifth h2 */
+}
+
+.profile:nth-of-type(6) {
+  background-color: #fe8555; /* Purple background for fifth h2 */
+}
+
+.profile:nth-of-type(1) h2 {
+  background-color: #ffd31d; /* Yellow background for first h2 */
+}
+
+.profile:nth-of-type(2) h2 {
+  background-color: #4caf50; /* Green background for second h2 */
+}
+
+.profile:nth-of-type(3) h2 {
+  background-color: #2196f3; /* Blue background for third h2 */
+}
+
+.profile:nth-of-type(4) h2 {
+  background-color: #e91e63; /* Pink background for fourth h2 */
+}
+
+.profile:nth-of-type(5) h2 {
+  background-color: #9c27b0; /* Purple background for fifth h2 */
+}
+
+.profile:nth-of-type(6) h2 {
+  background-color: #fc4618; /* Purple background for fifth h2 */
+}
+
+.nav-buttons button:last-child {
+  background: var(--error) !important;
+  color: white !important;
+  font-weight: 600;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.nav-buttons button:last-child:hover {
+  background: #c53030 !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(229, 62, 62, 0.3);
+}
+
+.nav-buttons button:last-child:hover::after {
+  background: white;
+}

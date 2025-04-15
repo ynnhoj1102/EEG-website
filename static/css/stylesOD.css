@@ -1,0 +1,442 @@
+:root {
+  --primary: #2A4E6E;
+  --secondary: #5B86E5;
+  --accent: #4CAF50;
+  --text: #2D3748;
+  --background: #F8FAFC;
+  --surface: #FFFFFF;
+  --error: #E53E3E;
+  --success: #38A169;
+  --warning: #DD6B20;
+  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+body {
+  background: linear-gradient(
+    135deg,
+    #83b2e1 0%,
+    #e9ecef 50%,
+    #f8f9fa 100%
+  );
+  position: relative;
+  min-height: 100vh;
+  color: var(--text);
+  line-height: 1.6;
+  min-height: 100vh;
+  padding: 2rem;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: 
+    linear-gradient(rgba(0,0,0,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,0,0,0.03) 1px, transparent 1px);
+  background-size: 20px 20px;
+  z-index: -1;
+  pointer-events: none;
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  width: 150vw;
+  height: 150vh;
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(91, 134, 229, 0.08) 0%,
+    rgba(255,255,255,0) 60%
+  );
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: -2;
+}
+
+.header {
+  background: linear-gradient(135deg, var(--primary), #1A365D);
+  color: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  margin-bottom: 2rem;
+  box-shadow: var(--shadow);
+  position: relative;
+  overflow: hidden;
+}
+
+.header::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--secondary), var(--accent));
+}
+
+.header h1 {
+  font-size: 2.5rem;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.header img {
+  width: 60px;
+  height: 60px;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+}
+
+.container {
+  background: rgba(255,255,255,0.92);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,0.3);
+}
+
+.nav-buttons {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 1px;
+  background: rgba(255,255,255,0.85);
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(255,255,255,0.3);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  margin-bottom: 2rem;
+}
+
+button {
+  background: var(--surface);
+  color: var(--text);
+  padding: 1rem;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  font-weight: 500;
+  position: relative;
+}
+
+button:hover {
+  background: var(--secondary);
+  color: white;
+  transform: translateY(-2px);
+}
+
+button:hover::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60%;
+  height: 3px;
+  background: var(--accent);
+  border-radius: 2px;
+}
+
+/* 重新设计内容区域 */
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  background: linear-gradient(145deg, #f8f9fa, #e9ecef);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(91, 134, 229, 0.15);
+  overflow: hidden;
+  padding: 2rem;
+  margin-top: 1rem;
+  border: 1px solid rgba(91, 134, 229, 0.2);
+}
+
+.main-info {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+}
+
+/* 病例卡片设计 */
+.profile {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border-left: 5px solid;
+}
+
+.profile:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
+}
+
+/* 疾病标题样式 */
+.profile h2 {
+  font-size: 1.8rem;
+  padding: 1.2rem 2rem;
+  margin: 0;
+  color: white;
+  display: flex;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.profile h2::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.4);
+}
+
+/* 病例内容容器 */
+.info {
+  padding: 2rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 2rem;
+}
+
+/* 单个病例样式 */
+.case {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 10px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.case h3 {
+  font-size: 1.4rem;
+  color: #2A4E6E;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid rgba(42, 78, 110, 0.1);
+}
+
+/* EEG图表容器 */
+.eeg-plot {
+  height: 350px;
+  margin-bottom: 1.5rem;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+/* 频带分析区域 */
+.frequency-bands {
+  margin-top: 1.5rem;
+}
+
+.bands-comparison {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+.bands-column {
+  background: rgba(255, 255, 255, 0.9);
+  padding: 1rem;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.bands-column h4 {
+  text-align: center;
+  margin-bottom: 1rem;
+  color: #2A4E6E;
+  font-size: 1.2rem;
+}
+
+/* 频带条样式 */
+.frequency-band {
+  margin-bottom: 1rem;
+}
+
+.band-label {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+}
+
+.band-label::before {
+  content: '';
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  margin-right: 8px;
+  background: currentColor;
+}
+
+.band-value {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.value-bar {
+  flex-grow: 1;
+  height: 10px;
+  background: #eee;
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.value-fill {
+  height: 100%;
+  border-radius: 5px;
+  transition: width 0.5s ease;
+}
+
+/* 分析报告样式 */
+.analysis-report {
+  margin-top: 1.5rem;
+  padding: 1.2rem;
+  background: #f8fafc;
+  border-radius: 8px;
+  border-left: 4px solid #5B86E5;
+}
+
+.analysis-report h4 {
+  color: #2A4E6E;
+  margin-bottom: 1rem;
+  font-size: 1.2rem;
+}
+
+.abnormality-item {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 0.8rem;
+  padding: 0.8rem;
+  background: white;
+  border-radius: 6px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+}
+
+.alert-icon {
+  margin-right: 0.8rem;
+  color: #e74c3c;
+  font-size: 1.2rem;
+}
+
+/* 不同疾病的颜色主题 */
+.profile:nth-of-type(1) {
+  border-left-color: #FF9A8B;
+}
+.profile:nth-of-type(1) h2 {
+  background: linear-gradient(135deg, #FF9A8B, #FF6B6B);
+}
+
+.profile:nth-of-type(2) {
+  border-left-color: #FFD166;
+}
+.profile:nth-of-type(2) h2 {
+  background: linear-gradient(135deg, #FFD166, #FFA600);
+}
+
+.profile:nth-of-type(3) {
+  border-left-color: #06D6A0;
+}
+.profile:nth-of-type(3) h2 {
+  background: linear-gradient(135deg, #06D6A0, #04A57F);
+}
+
+.profile:nth-of-type(4) {
+  border-left-color: #A78BFA;
+}
+.profile:nth-of-type(4) h2 {
+  background: linear-gradient(135deg, #A78BFA, #8C6BFA);
+}
+
+.profile:nth-of-type(5) {
+  border-left-color: #5B86E5;
+}
+.profile:nth-of-type(5) h2 {
+  background: linear-gradient(135deg, #5B86E5, #3A66C4);
+}
+
+/* 响应式设计 */
+@media (max-width: 992px) {
+  .info {
+    grid-template-columns: 1fr;
+  }
+  
+  .bands-comparison {
+    grid-template-columns: 1fr;
+  }
+  
+  .profile h2 {
+    font-size: 1.5rem;
+    padding: 1rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .content {
+    padding: 1rem;
+  }
+  
+  .case {
+    padding: 1rem;
+  }
+  
+  .eeg-plot {
+    height: 300px;
+  }
+}
+
+.eeg-slider {
+  width: 100%;
+  margin-top: 10px;
+  appearance: none;
+  height: 6px;
+  background: #ddd;
+  border-radius: 5px;
+  outline: none;
+}
+.eeg-slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  background: #2196F3;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.nav-buttons button:last-child {
+  background: var(--error) !important;
+  color: white !important;
+  font-weight: 600;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.nav-buttons button:last-child:hover {
+  background: #c53030 !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(229, 62, 62, 0.3);
+}
+
+.nav-buttons button:last-child:hover::after {
+  background: white;
+}

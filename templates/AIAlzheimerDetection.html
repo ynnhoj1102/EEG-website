@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AI Alzheimer Detection</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/stylesADD.css') }}">
+    <!-- Include Plotly for plotting the EEG data -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+    <div class="header1">
+        <h1>MindWave
+            <img src="{{ url_for('static', filename='photo/mindwave_logo.png') }}" alt="Logo">
+        </h1>
+    </div>
+    <div class="nav-buttons">
+        <button onclick="window.location.href='{{ url_for('home') }}'">Home</button>
+        <button onclick="window.location.href='{{ url_for('online_data') }}'">Online Data</button>
+        <button onclick="window.location.href='{{ url_for('profile') }}'">MyData</button>
+        <button onclick="window.location.href='{{ url_for('ai_alzheimer_detection') }}'">AI Alzheimer Detection</button>
+        <button onclick="window.location.href='{{ url_for('chatbot') }}'">AI Helper</button>
+        <button onclick="window.location.href='{{ url_for('about_us') }}'">About Us</button>
+        <button onclick="window.location.href='{{ url_for('login') }}'">Logout</button>
+    </div>
+    <div class="maincontent">
+        <div class="container" style="padding: 2rem;">
+            <h2 style="margin-bottom: 1.5rem;">🧠 AI Alzheimer Detection</h2>
+            <p>Please upload an EEG <code>.set</code> file for automatic analysis, prediction, and EEG visualization.</p>
+            <form id="uploadForm" action="{{ url_for('ai_alzheimer_detection') }}" method="post" enctype="multipart/form-data" style="margin-top: 1rem;">
+                {{ form.hidden_tag() }}
+                <label for="eeg_file_input" class="custom-upload">
+                    Choose EEG File (.set)
+                </label>
+                {{ form.eeg_file(id="eeg_file_input", style="display: none;") }}
+                <span id="file-name" style="margin-left: 10px;">No file chosen</span>
+                <br>
+                <button type="submit" class="custom-submit" style="margin-top: 1rem;">Upload and Analyze</button>
+                <!-- Loading spinner (initially hidden) -->
+                <div id="loading" style="display: none; margin-top: 1rem;">
+                    <div class="spinner"></div>
+                    <p>Analyzing EEG file...</p>
+                </div>
+            </form>
+
+            {% if result %}
+            <div class="analysis-section">
+                <h2>Prediction Result</h2>
+                <p><strong>Predicted Class:</strong> {{ result.prediction }}</p>
+                <p><strong>Confidence:</strong> {{ result.confidence }}%</p>
+                {% if result.csv_link %}
+                <p>
+                    <strong>CSV Download:</strong>
+                    <a href="{{ result.csv_link }}" class="download-link" target="_blank">Download the converted CSV file</a>
+                </p>
+                {% endif %}
+                <p>⚠️ <strong>Disclaimer:</strong> This result is a prediction based on deep learning and machine learning. It is for early detection reference only and <strong>should not be used for clinical diagnosis</strong>. Please consult healthcare professionals for proper medical advice.</p>
+                <!-- Detailed Analysis Button -->
+                <button id="detailedAnalysisBtn" class="custom-submit" style="margin-top: 1rem;">Detailed Analysis</button>
+                <div id="detailedAnalysisReport" style="margin-top:1rem; padding:10px; background:#f0f4f8; border-radius:5px;"></div>
+            </div>
+
+            <!-- EEG Plot Container -->
+            {% if result.patient_data and result.control_data %}
+            <div class="analysis-section">
+                <h2>EEG Data Comparison</h2>
+                <div id="eegPlotContainer" style="height:400px;"></div>
+            </div>
+            {% endif %}
+            {% endif %}
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            // --- File input and form spinner setup ---
+            var eegInput = document.getElementById('eeg_file_input');
+            var fileNameSpan = document.getElementById('file-name');
+            if (eegInput) {
+                eegInput.addEventListener('change', function(e) {
+                    var fileName = (e.target.files[0] && e.target.files[0].name) || 'No file chosen';
+                    fileNameSpan.textContent = fileName;
+                    console.log("File selected: " + fileName);
+                });
+            }
+            var uploadForm = document.getElementById('uploadForm');
+            var loadingDiv = document.getElementById('loading');
+            if (uploadForm) {
+                uploadForm.addEventListener('submit', function() {
+                    if (loadingDiv) {
+                        loadingDiv.style.display = 'block';
+                        console.log("Loading spinner shown.");
+                    }
+                });
+            }
+            
+            // --- Global variable for storing CSV filename, if generated ---
+            var csvFilename = null;
+            {% if result and result.csv_link %}
+                var csvUrl = "{{ result.csv_link }}";
+                var parts = csvUrl.split('/');
+                csvFilename = parts[parts.length - 1];
+            {% endif %}
+            
+            // --- Plot EEG data with highlighted regions (unchanged) ---
+            {% if result and result.patient_data and result.control_data %}
+            (function plotEEG() {
+                var patientData = {{ result.patient_data | tojson }};
+                var controlData = {{ result.control_data | tojson }};
+                
+                var tracePatient = {
+                    x: patientData.times,
+                    y: patientData.data,
+                    name: "Patient EEG",
+                    type: "scatter",
+                    line: { color: '#FF0000' }
+                };
+                var traceControl = {
+                    x: controlData.times,
+                    y: controlData.data,
+                    name: "Normal Control",
+                    type: "scatter",
+                    line: { color: '#0000FF' }
+                };
+                var layout = {
+                    title: "EEG Data Comparison",
+                    xaxis: {
+                        title: "Time (s)",
+                        rangeslider: {},
+                        range: [0, 20],
+                        type: "linear"
+                    },
+                    yaxis: {
+                        title: "Amplitude (μV)",
+                        range: [-200, 200]
+                    },
+                    showlegend: true,
+                    legend: {
+                        orientation: 'v',
+                        x: 1.02,
+                        y: 1,
+                        xanchor: 'left',
+                        yanchor: 'top',
+                        bgcolor: 'rgba(255,255,255,0.7)',
+                        bordercolor: '#CCC',
+                        borderwidth: 1
+                    },
+                    margin: { l: 50, r: 80, t: 50, b: 50 },
+                    shapes: []
+                };
+                
+                var threshold = 50;
+                var significantIntervals = [];
+                var currentInterval = null;
+                var currentMaxDiff = 0;
+                for (var i = 0; i < patientData.data.length; i++) {
+                    var diff = Math.abs(patientData.data[i] - controlData.data[i]);
+                    if (diff > threshold) {
+                        if (currentInterval === null) {
+                            currentInterval = { start: patientData.times[i], end: patientData.times[i] };
+                            currentMaxDiff = diff;
+                        } else {
+                            currentInterval.end = patientData.times[i];
+                            if (diff > currentMaxDiff) {
+                                currentMaxDiff = diff;
+                            }
+                        }
+                    } else {
+                        if (currentInterval !== null) {
+                            currentInterval.maxDiff = currentMaxDiff;
+                            significantIntervals.push(currentInterval);
+                            currentInterval = null;
+                            currentMaxDiff = 0;
+                        }
+                    }
+                }
+                if (currentInterval !== null) {
+                    currentInterval.maxDiff = currentMaxDiff;
+                    significantIntervals.push(currentInterval);
+                }
+                
+                // Select the longest interval and the one with the highest voltage difference.
+                var longestInterval = null;
+                var longestDuration = 0;
+                var maxDiffInterval = null;
+                var highestDiff = 0;
+                significantIntervals.forEach(function(interval) {
+                    var duration = interval.end - interval.start;
+                    if (duration > longestDuration) {
+                        longestDuration = duration;
+                        longestInterval = interval;
+                    }
+                    if (interval.maxDiff > highestDiff) {
+                        highestDiff = interval.maxDiff;
+                        maxDiffInterval = interval;
+                    }
+                });
+                
+                // Build a summary string using only these two intervals.
+                var summaryParts = [];
+                if (longestInterval) {
+                    summaryParts.push("Longest abnormal interval: from " + longestInterval.start.toFixed(1) + " to " + longestInterval.end.toFixed(1) + " seconds (duration: " + longestDuration.toFixed(1) + " sec).");
+                }
+                if (maxDiffInterval) {
+                    summaryParts.push("Maximum deviation interval: from " + maxDiffInterval.start.toFixed(1) + " to " + maxDiffInterval.end.toFixed(1) + " seconds (max difference: " + maxDiffInterval.maxDiff.toFixed(1) + " μV).");
+                }
+                var abnormalIntervalsSummary = summaryParts.join(" ");
+                if (!abnormalIntervalsSummary) {
+                    abnormalIntervalsSummary = "No abnormal intervals detected.";
+                }
+                window.abnormalIntervalsSummary = abnormalIntervalsSummary;
+                console.log("Computed abnormal intervals summary: " + window.abnormalIntervalsSummary);
+                
+                // Draw highlighted regions.
+                significantIntervals.forEach(function(interval) {
+                    layout.shapes.push({
+                        type: 'rect',
+                        xref: 'x',
+                        yref: 'paper',
+                        x0: interval.start,
+                        x1: interval.end,
+                        y0: 0,
+                        y1: 1,
+                        fillcolor: 'rgba(255,255,0,0.3)',
+                        line: { width: 0 },
+                        layer: 'below'
+                    });
+                });
+                
+                var config = {
+                    responsive: true,
+                    displayModeBar: true,
+                    displaylogo: false,
+                    scrollZoom: true
+                };
+                Plotly.newPlot('eegPlotContainer', [tracePatient, traceControl], layout, config);
+                console.log("EEG plot rendered.");
+            })();
+            {% endif %}
+            
+            // --- CSV deletion on page unload ---
+            window.addEventListener('beforeunload', function () {
+                if (csvFilename) {
+                    var url = '/delete_csv/' + csvFilename;
+                    navigator.sendBeacon(url, "");
+                    console.log("Deletion beacon sent for CSV: " + csvFilename);
+                }
+            });
+            
+            // --- Helper functions to convert Markdown bold to HTML and newlines to <br> ---
+            function convertMarkdownToHtml(text) {
+                return text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+            }
+            function nl2br(text) {
+                return text.replace(/\n/g, '<br>');
+            }
+            
+            // --- Detailed Analysis Button Handler ---
+            var detailedBtn = document.getElementById('detailedAnalysisBtn');
+            if (detailedBtn) {
+                detailedBtn.addEventListener('click', async function() {
+                    var analysisReportDiv = document.getElementById('detailedAnalysisReport');
+                    // Show loading indicator.
+                    analysisReportDiv.innerHTML = "<p>Generating detailed analysis, please wait...</p>";
+                    console.log("Detailed analysis loading message shown.");
+                    
+                    try {
+                        // Fetch the user's CSV file.
+                        const userCsvResponse = await fetch('{{ result.csv_link }}');
+                        const userCsvText = await userCsvResponse.text();
+                        console.log("User CSV text (first 500 chars):", userCsvText.slice(0, 500));
+                        
+                        // Fetch the normal CSV file.
+                        const normalCsvResponse = await fetch('/download_normal_csv');
+                        const normalCsvText = await normalCsvResponse.text();
+                        console.log("Normal CSV text (first 500 chars):", normalCsvText.slice(0, 500));
+                        
+                        // Use computed abnormal intervals summary.
+                        var abnormalIntervals = window.abnormalIntervalsSummary || "No abnormal intervals detected.";
+                        
+                        // Get the current date in a readable format.
+                        var currentDate = new Date().toLocaleDateString();
+                        // Get the patient's full name from the template variable (make sure to pass user info in your route).
+                        var patientName = "{{ user['full_name'] }}";
+                        
+                        // Build the prompt based on the model prediction.
+                        var prediction = "{{ result.prediction }}";
+                        var modelResult = "Model Prediction: {{ result.prediction }} with {{ result.confidence }}% confidence.";
+                        var prompt = "";
+                        if (prediction === "Normal") {
+                            prompt = `
+        Please generate an EEG Analysis Report with the following details:
+        
+        **Patient Name:** ${patientName}
+        **Date of Examination:** ${currentDate}
+        
+        **1. AI Alzheimer's Detection Model Result:**
+           ${modelResult}
+           This indicates that your EEG analysis shows healthy brain activity with no significant abnormalities detected.
+        
+        **2. Abnormal EEG Time Ranges:**
+           No abnormal EEG intervals were detected.
+        
+        **3. General Recommendations:**
+           - Maintain a healthy lifestyle with regular exercise, balanced nutrition, and stress management.
+           - Continue engaging in cognitive activities and social interactions.
+           - Schedule periodic check-ups to monitor your brain health.
+        
+        Please output the report in plain text with clear headings for each section.
+                            `;
+                        } else {
+                            prompt = `
+        Please generate an EEG Analysis Report with the following details:
+        
+        **Patient Name:** ${patientName}
+        **Date of Examination:** ${currentDate}
+        
+        **1. AI Alzheimer's Detection Model Result:**
+           ${modelResult}
+           This indicates that based on the AI analysis, you have an elevated risk of Alzheimer's disease.
+        
+        **2. Abnormal EEG Time Ranges:**
+           ${abnormalIntervals}
+           (These indicate the periods during which the voltage difference between your EEG and a normal EEG exceeds 50 μV.)
+        
+        **3. Preventive Measures:**
+           - Engage in regular physical exercise.
+           - Participate in cognitive training and mental stimulation.
+           - Adopt a balanced diet rich in antioxidants.
+           - Practice stress reduction techniques, such as meditation.
+           - Schedule regular medical check-ups for early detection.
+        
+        Please output the report in plain text with clear headings for each section.
+                            `;
+                        }
+                        console.log("Constructed prompt:", prompt);
+                        
+                        // Call the Chatbot AI API.
+                        const API_KEY = "AIzaSyDzxmO93k2zn7F0vnieYUBHm5c-xTY9ejo";
+                        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
+                        console.log("Using API endpoint:", endpoint);
+                        
+                        const aiResponse = await fetch(endpoint, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                contents: [{ parts: [{ text: prompt }] }]
+                            })
+                        });
+                        const aiData = await aiResponse.json();
+                        console.log("Full Chatbot AI response:", aiData);
+                        
+                        let analysisReport = "No analysis report available.";
+                        if (aiData.candidates && aiData.candidates.length > 0 &&
+                            aiData.candidates[0].content && aiData.candidates[0].content.parts &&
+                            aiData.candidates[0].content.parts[0].text) {
+                            analysisReport = aiData.candidates[0].content.parts[0].text;
+                        } else {
+                            analysisReport = "The Chatbot API did not return any analysis report. Check the API request and response in the console.";
+                        }
+                        analysisReport = nl2br(convertMarkdownToHtml(analysisReport));
+                        analysisReportDiv.innerHTML = analysisReport;
+                        console.log("Detailed analysis report displayed.");
+                    } catch (error) {
+                        console.error("Detailed analysis error:", error);
+                        analysisReportDiv.innerText = "Error generating detailed analysis: " + error.message;
+                    }
+                });
+            }
+        });
+        </script>
+         
+        
+</body>
+</html>

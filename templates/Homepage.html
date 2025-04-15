@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MindWave Home Page</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/stylesHP.css') }}">
+</head>
+<body>
+<div class="header">
+  <h1>MindWave<img src="{{ url_for('static', filename='photo/mindwave_logo.png') }}" alt="MindWave Logo"></h1>
+</div>
+
+<div class="nav-buttons">
+  <button onclick="window.location.href='{{ url_for('home') }}'">Home</button>
+  <button onclick="window.location.href='{{ url_for('online_data') }}'">Online Data</button>
+  <button onclick="window.location.href='{{ url_for('profile') }}'">MyData</button>
+  <button onclick="window.location.href='{{ url_for('ai_alzheimer_detection') }}'">AI Alzheimer Detection</button>
+  <button onclick="window.location.href='{{ url_for('chatbot') }}'">AI Helper</button>
+  <button onclick="window.location.href='{{ url_for('about_us') }}'">About Us</button>
+  <button onclick="window.location.href='{{ url_for('login') }}'">Logout</button>
+</div>
+
+<!--
+<div class="logout-container">
+  <form action="{{ url_for('logout') }}" method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+    <button type="submit" class="logout-button">Logout</button>
+  </form>
+</div>
+-->
+
+<div class="content">
+  <div class="sidebar">
+    <h2>Quick Selection</h2>
+    <ul>
+      <li onclick="scrollToSection('Alzheimer')">Alzheimer's</li>
+      <li onclick="scrollToSection('MS')">Multiple Sclerosis</li>
+      <li onclick="scrollToSection('Dementia')">Dementia</li>
+      <li onclick="scrollToSection('Parkinson')">Parkinson's</li>
+      <br>
+      <li onclick="scrollToSection('Cognitive Assessment')">Cognitive Assessment</li>
+      <li onclick="scrollToSection('Personalized Training')">Personalized Training</li>
+      <li onclick="scrollToSection('Data Visualization')">Data Visualization</li>
+      <li onclick="scrollToSection('Long-Term Monitoring')">Long-Term Monitoring</li>
+      <br>
+      <li class="tips-button" onclick="showTipsPopup()">Tips for Prevention<img src="{{ url_for('static', filename='photo/tips.jpg') }}" alt="tips"></li>
+    </ul>
+  </div>
+
+  <div class="main-info">
+    <h1 class="introduction-title">Welcome to MindWave website. <br>
+    To check out what is the website for? <br>
+    <img src="{{ url_for('static', filename='photo/pointdown.gif') }}" alt="Point Down" class="content-img">
+    </h1>
+    <h4 class="introduction-content">In response to Hong Kong's escalating aging population, the demand for innovative healthcare solutions has never been more pressing. 
+      With age-associated changes impacting brain activity and giving rise to various health concerns, it has become imperative to address these challenges proactively. 
+      Our website serves as a vital platform for individuals to detect and address these issues at an early stage, 
+      empowering them to take timely and targeted measures to safeguard their cognitive well-being. 
+      By facilitating early intervention and personalized strategies, 
+      we aim to equip patients with the tools they need to effectively manage and maintain their mental health, 
+      ensuring a better quality of life as they navigate the complexities of aging. </h4>
+
+    <h2>What's the mental illness?</h2>
+
+    <h3 id="Alzheimer">Alzheimer's</h3>
+    <div class="info-block">
+      <div class="image-float-left standardized-img">
+        <img src="{{ url_for('static', filename='photo/alzheimers.jpg') }}" alt="Alzheimer Portrait">
+      </div>
+      <div class="image-float-right standardized-img">
+        <img src="{{ url_for('static', filename='photo/alzheimers1.png') }}" alt="Alzheimer Brain Scan">
+      </div>
+      <p style="font-size: 1.3rem; line-height: 1.8;">
+        Alzheimer's disease is a progressive brain disease characterised by the accumulation of protein deposits in the brain, 
+        leading to brain shrinkage and cell death. This degenerative disease ultimately affects memory, thinking, behaviour and social skills. 
+        As Alzheimer's disease progresses, it leads to a decline in cognitive function and quality of life, affecting daily functioning and independence. 
+        The accumulation of proteins disrupts normal brain function, leading to a range of neurological symptoms that worsen over time, 
+        determining the course of this debilitating disease.
+      </p>
+    </div>
+    
+    <h3 id="MS">Multiple Sclerosis</h3>
+    <div class="info-block">
+      <div class="image-float-left standardized-img">
+        <img src="{{ url_for('static', filename='photo/Multiple_Sclerosis.jpg') }}" alt="Multiple Sclerosis Awareness">
+      </div>
+      <p style="font-size: 1.3rem; line-height: 1.8;">
+        Multiple sclerosis (MS) is a disease that targets the central nervous system, including the brain and spinal cord. 
+        A faulty attack on nerve fibres by the immune system is a hallmark of the disease. Symptoms of MS often include mobility problems, 
+        such as difficulty walking, vision problems, and cognitive problems. The effects of this autoimmune disease on the nervous system result in a range 
+        of debilitating symptoms that vary in severity and progression, and in their impact on the individual, highlighting the complexity of managing and treating MS.
+      </p>
+    </div>
+    
+    <h3 id="Dementia">Dementia</h3>
+    <div class="info-block">
+      <div class="image-float-left standardized-img">
+        <img src="{{ url_for('static', filename='photo/dementia.gif') }}" alt="Dementia">
+      </div>
+      <p style="font-size: 1.3rem; line-height: 1.8;">
+        Dementia is a condition caused by various diseases that damage brain cells and disrupt communication between them. 
+        The disruption of cell-to-cell communication leads to cognitive impairment, which affects memory, reasoning and behaviour. 
+        Symptoms of dementia may manifest as changes in mood and behaviour, including confusion and agitation. People with dementia often struggle 
+        with complex tasks and problem solving, reflecting the challenges of cognitive decline. Dealing with dementia involves addressing these 
+        cognitive deficits, providing support to the person and their carers, and adapting strategies to improve the person's quality of life 
+        in the face of this debilitating condition.
+      </p>
+    </div>
+    
+    <h3 id="Parkinson">Parkinson's</h3>
+    <div class="info-block">
+      <div class="image-float-right standardized-img">
+        <img src="{{ url_for('static', filename='photo/Parkinsons.gif') }}" alt="Parkinson">
+      </div>
+      <p style="font-size: 1.3rem; line-height: 1.8;">
+        Parkinson's disease is a neurological condition that impairs the brain's ability to produce dopamine, an important neurotransmitter. 
+        The initial symptoms of Parkinson's disease can be divided into two main categories. The first is called 'motor symptoms', which include 
+        movement-related problems such as tremors, slowness of movement, and difficulties with balance and co-ordination. On the other hand, 
+        'non-motor symptoms' include a range of problems such as pain, anxiety, depression, sleep disorders and cognitive impairment. 
+        The multifaceted nature of Parkinson's disease highlights the different ways in which it affects individuals, both in terms of motor function 
+        and overall well-being. Early detection and comprehensive management strategies are essential to address the complexity of this progressive 
+        neurodegenerative disease.
+      </p>
+    </div>
+
+    <h2>How our website help you?</h2>
+
+    <h3 id="Cognitive Assessment">Cognitive Assessment</h3>
+<div class="info-block">
+  <div class="image-float-right standardized-img">
+    <img src="{{ url_for('static', filename='photo/Cognitive_Assessment.jpg') }}" alt="Assessment">
+  </div>
+  <p style="font-size: 1.3rem; line-height: 1.8;">
+    Our Cognitive Assessment Service provides the most advanced approach to understanding and optimising cognitive functioning. 
+    Using EEG technology, we can provide real-time assessments of key cognitive areas such as memory, attention and decision-making. 
+    By analysing advanced EEG data, we can delve deeper into brain activity patterns, providing valuable insights into cognitive performance. 
+    This real-time assessment provides a comprehensive picture of cognitive strengths and areas for improvement, 
+    allowing for the development of customised interventions and training programmes based on individual needs. 
+    Harness the power of EEG technology to unlock your cognitive potential and enhance your mental acuity like never before.
+  </p>
+</div>
+
+<h3 id="Personalized Training">Personalized Training</h3>
+<div class="info-block">
+  <div class="image-float-right standardized-img">
+    <img src="{{ url_for('static', filename='photo/Personalized_Training.gif') }}" alt="Training">
+  </div>
+  <p style="font-size: 1.3rem; line-height: 1.8;">
+    Our platform goes beyond traditional cognitive training methods by using an individual's brainwave signals to generate personalised training plans. 
+    By analysing unique brainwave patterns, we can design tailor-made cognitive exercises for specific cognitive functions. 
+    These programmes are tailored to the individual's cognitive strengths and weaknesses to ensure optimal participation and effectiveness. 
+    Through this innovative approach, users can embark on a cognitive enhancement journey that is precisely tailored to their unique neural activity. 
+    Experience the power of personalised cognitive training and discover your full cognitive potential with our EEG drivers.
+  </p>
+</div>
+
+<h3 id="Data Visualization">Data Visualization</h3>
+<div class="info-block">
+  <div class="image-float-right standardized-img">
+    <img src="{{ url_for('static', filename='photo/Data_Visualization.gif') }}" alt="Visualization">
+  </div>
+  <p style="font-size: 1.3rem; line-height: 1.8;">
+    Our platform provides a visually engaging experience by providing users with interactive diagrams of EEG data, 
+    allowing them to fully explore their brain activity maps. 
+    These visual representations provide insight into complex patterns of neural activity, allowing users to gain a deeper understanding of their cognitive processes. 
+    With visual EEG data, users can track changes in brain activity over time, identify areas of strength and potential areas for improvement, 
+    and monitor progress throughout the cognitive training process. 
+    Empowering users with this visual feedback enhances their ability to understand and optimise their cognitive performance, 
+    making the cognitive enhancement process both informative and engaging.
+  </p>
+</div>
+
+<h3 id="Long-Term Monitoring">Long-Term Monitoring</h3>
+<div class="info-block">
+  <div class="image-float-right standardized-img">
+    <img src="{{ url_for('static', filename='photo/Long-Term_Monitoring.png') }}" alt="Monitoring">
+  </div>
+  <p style="font-size: 1.3rem; line-height: 1.8;">
+    Our platform facilitates the generation of cognitive state monitoring curves through regular assessment tasks, 
+    giving users a comprehensive view of their cognitive performance over time. Through regular participation in these tasks, 
+    users can track their cognitive progress through dynamic curves that reflect changes in key cognitive domains. 
+    This longitudinal monitoring approach allows users to identify trends, measure improvements, 
+    and adjust training programmes according to changing cognitive needs. By visualising cognitive states through these monitoring curves, 
+    users can gain valuable insights into their cognitive development, thus fostering smarter and more effective ways to enhance their cognitive abilities.
+  </p>
+</div>
+    
+    
+  </div>
+</div>
+
+<div id="tipsPopup" class="popup">
+  <div class="popup-content">
+    <span class="close-btn" onclick="closePopup()">&times;</span>
+    <h3>Training Tips for Prevention</h3>
+    <div class="tips-content">
+      <h4>Alzheimer's</h4>
+      <p>• Cognitive training games and puzzles <img class="content-img" src="{{ url_for('static', filename='photo/puzzle.jpg') }}" alt="puzzle"><br>
+         • Regular physical exercise (especially aerobic)<br>
+         • Learning new skills or languages<br>
+         • Social engagement activities</p>
+
+      <h4>Multiple Sclerosis</h4>
+      <p>• Balance and coordination exercises<img class="content-img" src="{{ url_for('static', filename='photo/yoga.jpg') }}" alt="yoga"><br>
+         • Strength training (moderate intensity)<br>
+         • Yoga or tai chi for flexibility<br>
+         • Cognitive exercises to maintain focus</p>
+
+      <h4>Dementia</h4>
+      <p>• Memory training exercises<img class="content-img" src="{{ url_for('static', filename='photo/music.jpg') }}" alt="music"><br>
+         • Music therapy and art activities<br>
+         • Daily routine cognitive tasks<br>
+         • Social interaction activities</p>
+
+      <h4>Parkinson's</h4>
+      <p>• Dance or movement therapy<img class="content-img" src="{{ url_for('static', filename='photo/talk.jpg') }}" alt="talk"><br>
+         • Voice and speech exercises<br>
+         • Fine motor skill activities<br>
+         • Dual-task training (combining physical and cognitive tasks)</p>
+    </div>
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MindWave About Us</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/stylesAU.css') }}">
+</head>
+<body>
+<div class="header">
+  <h1>MindWave<img src="{{ url_for('static', filename='photo/mindwave_logo.png') }}" alt="MindWave Logo"></h1>
+</div>
+
+<div class="nav-buttons">
+  <button onclick="window.location.href='{{ url_for('home') }}'">Home</button>
+  <button onclick="window.location.href='{{ url_for('online_data') }}'">Online Data</button>
+  <button onclick="window.location.href='{{ url_for('profile') }}'">MyData</button>
+  <button onclick="window.location.href='{{ url_for('ai_alzheimer_detection') }}'">AI Alzheimer Detection</button>
+  <button onclick="window.location.href='{{ url_for('chatbot') }}'">AI Helper</button>
+  <button onclick="window.location.href='{{ url_for('about_us') }}'">About Us</button>
+  <button onclick="window.location.href='{{ url_for('login') }}'">Logout</button>
+</div>
+
+<div class="content">
+  <div class="main-info">
+    <div class="profile intro">
+      <div class="info">
+          <h2> What our website is all about?</h2>
+          <p>
+            Our website outlines the progress of the 'EEG-based Cognitive Assessment Website' project, which aims to develop a non-invasive, real-time cognitive health monitoring platform using EEG technology and machine learning algorithms. The platform is designed to address the challenges of early detection and intervention in neurodegenerative diseases such as Alzheimer's and Parkinson's diseases. The system uses EEG data to provide users with personalised cognitive assessment, health tracking, risk analysis and preventive advice.
+            Key advances include the development of a website prototype, database architecture, feature extraction methods, and initial AI model training for Alzheimer's disease detection. Challenges such as data scarcity, real-time processing and user comfort have been identified and mitigation strategies proposed.
+      </div>
+    </div>
+    <div class="profile">
+      <img src="{{ url_for('static', filename='photo/Jason.jpeg') }}" alt="Person 1 Photo">
+      <div class="info">
+          <h2>Jason</h2>
+          <p>
+            Hi I am Jason. I am responsible for creating a user-friendly platform that integrates advanced EEG technology with everyday cognitive health management. This website aims to provide users with tools for early detection of neurodegenerative diseases such as Alzheimer's and Parkinson's through intuitive design and personalised insights. My part of the job is to make the interface engaging and easy to use, ensuring that users can easily navigate features such as real-time EEG data processing, personalised assessments and AI-driven assistance.
+          </p>
+      </div>
+    </div>
+
+    <div class="profile reverse">
+      <img src="{{ url_for('static', filename='photo/Nelson.jpeg') }}" alt="Person 2 Photo">
+      <div class="info">
+          <h2>Nelson</h2>
+          <p>
+            Hi I am Nelson. In this web page, I am responsible for designing the database architecture to store two types of data: patient EEG data and sample data. I completed the creation of tables in MySQL to store these two datasets and used the online EEG dataset for testing. I am responsible for converting the EEG data into the database to ensure that the data is ready to be analysed. I linked to the AI model through the database for analysis and integrated the real EEG headphone data into the system for real-time functionality.
+          </p>
+      </div>
+    </div>
+
+    <div class="profile">
+      <img src="{{ url_for('static', filename='photo/Simon.jpeg') }}" alt="Person 3 Photo">
+      <div class="info">
+          <h2>Simon</h2>
+          <p>
+            Hi I am Simon. In this site, I am responsible for converting EEG data and linking it to a database. I use Python to extract features from the online EEG dataset and create power spectral density maps to analyse the data. I'm focusing on processing online EEG signals, developing Python code to detect disease signatures, and ensuring compatibility with various data formats. I am also testing the integration of signal processing with databases to verify the accuracy of the data. I am also acquiring EEG headset hardware for real-time signal acquisition, enhancing real-time processing algorithms, and expanding data visualisation capabilities to improve the user experience.
+          </p>
+      </div>
+    </div>
+
+    <div class="profile reverse">
+      <img src="{{ url_for('static', filename='photo/Johnny.jpeg') }}" alt="Person 4 Photo">
+      <div class="info">
+          <h2>Johnny</h2>
+          <p>
+            Hi I am Johnny. In this website, I focus on training EEG-based AI models due to the availability of online datasets. I categorise MMSE scores into cognitive states (normal, MCI, dementia, severe dementia) as target variables and use EEG features (Delta, Theta, Alpha, Beta, Gamma) to train machine learning models. I use Grid/Random Search to optimise the hyperparameters and deal with data imbalance. I also integrate the model with a real-time EEG analysis platform, extend it to other diseases such as Parkinson's, and deploy the model on a scalable cloud-based platform.
+          </p>
+      </div>
+    </div>
+
+    <div class="profile">
+      <img src="{{ url_for('static', filename='photo/dani.png') }}" alt="Person 5 Photo">
+      <div class="info">
+          <h2>ASSI Dani Samer</h2>
+          <p>-Counsellor
+            <br>-Technical instructor</p>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+  <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>

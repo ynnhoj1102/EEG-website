@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MindWave Online Data</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/stylesOD.css') }}">
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+<div class="header">
+  <h1>MindWave  <img src="{{ url_for('static', filename='photo/MindWave_Logo.png') }}" alt="MindWave Logo"></h1>
+</div>
+
+<div class="nav-buttons">
+    <button onclick="window.location.href='{{ url_for('home') }}'">Home</button>
+    <button onclick="window.location.href='{{ url_for('online_data') }}'">Online Data</button>
+    <button onclick="window.location.href='{{ url_for('profile') }}'">MyData</button>
+    <button onclick="window.location.href='{{ url_for('ai_alzheimer_detection') }}'">AI Alzheimer Detection</button>
+    <button onclick="window.location.href='{{ url_for('chatbot') }}'">AI Helper</button>
+    <button onclick="window.location.href='{{ url_for('about_us') }}'">About Us</button>
+    <button onclick="window.location.href='{{ url_for('login') }}'">Logout</button>
+</div>
+
+<!-- Dataset Introduction -->
+<div class="intro" style="background: white; padding: 2rem; border-radius: 12px; box-shadow: var(--shadow); margin-bottom: 2rem;">
+    <h2>About the Dataset</h2>
+    <p>This online EEG data comes from the publicly available dataset: 
+      <strong><a href="https://openneuro.org/datasets/ds004504/versions/1.0.8" target="_blank" style="color: var(--primary); text-decoration: underline;">A dataset of EEG recordings from: Alzheimer's disease, Frontotemporal dementia and Healthy subjects</a></strong>.
+      It contains standardized EEG recordings that allow us to compare brain wave patterns across patients with Alzheimer's and healthy controls.
+    </p>
+    
+    <h3 style="margin-top: 2rem;">EEG Frequency Bands</h3>
+    <div style="text-align: center;">
+        <img 
+          src="{{ url_for('static', filename='photo/Frequency-bands-of-EEG-signal.png') }}" 
+          alt="EEG Frequency Bands" 
+          style="width: 90%; max-width: 600px; border-radius: 8px; margin: 1rem auto; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: block;"
+        >
+    </div>
+
+    <ul style="padding-left: 1.5rem; line-height: 1.8;">
+      <li><strong>Gamma (30–100+ Hz)</strong>: Reflects higher-level cognitive processing. Diminished gamma power has been linked to Alzheimer's disease.</li>
+      <li><strong>Beta (12–30 Hz)</strong>: Related to active thinking and focus. Increased beta activity can sometimes be seen in Parkinson’s disease.</li>
+      <li><strong>Alpha (8–12 Hz)</strong>: Linked to relaxation. Reduced alpha may be observed in Alzheimer’s patients.</li>
+      <li><strong>Theta (4–7 Hz)</strong>: Associated with drowsiness and meditation. Excessive activity may suggest cognitive decline or early Alzheimer’s symptoms.</li>
+      <li><strong>Delta (0–4 Hz)</strong>: Found in deep sleep. Elevated levels in awake adults may indicate brain injury or disease.</li>
+    </ul>
+</div>
+
+<div class="content">
+  <div class="main-info">
+    <!-- Mental Illness: Alzheimer's -->
+    <div class="profile">
+      <h2>Alzheimer's</h2>
+      <div class="info">
+        <div class="case">
+          <h3>Case 1</h3>
+          <div id="alzheimer-case1-plot" class="eeg-plot"></div>
+          <div id="alzheimer-case1-bands" class="frequency-bands"></div>
+          <div id="alzheimer-case1-report" class="analysis-report"></div>
+        </div>
+        <div class="case">
+          <h3>Case 2</h3>
+          <div id="alzheimer-case2-plot" class="eeg-plot"></div>
+          <div id="alzheimer-case2-bands" class="frequency-bands"></div>
+          <div id="alzheimer-case2-report" class="analysis-report"></div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Mental Illness: Parkinson's -->
+    <!--
+    <div class="profile">
+      <h2>Parkinson's</h2>
+      <div class="info">
+        <div class="case">
+          <h3>Case 1</h3>
+          <div id="parkinson-case1-plot" class="eeg-plot"></div>
+          <div id="parkinson-case1-bands" class="frequency-bands"></div>
+          <div id="parkinson-case1-report" class="analysis-report"></div>
+        </div>
+        <div class="case">
+          <h3>Case 2</h3>
+          <div id="parkinson-case2-plot" class="eeg-plot"></div>
+          <div id="parkinson-case2-bands" class="frequency-bands"></div>
+          <div id="parkinson-case2-report" class="analysis-report"></div>
+        </div>
+      </div>
+    </div>
+    -->
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/script.js') }}"></script>
+<script>
+// Reuse the EEG frequency definitions from Selfprofile.html
+const EEG_FREQUENCIES = {
+    'Delta': { min: 0.5, max: 4, color: '#2ecc71' },
+    'Theta': { min: 4, max: 8, color: '#3498db' },
+    'Alpha': { min: 8, max: 13, color: '#9b59b6' },
+    'Beta':  { min: 13, max: 30, color: '#e74c3c' },
+    'Gamma': { min: 30, max: 50, color: '#f1c40f' }
+};
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadAllEEGData();
+});
+
+function loadAllEEGData() {
+    ['alzheimer', 'parkinson'].forEach(disease => {
+        for (let i = 1; i <= 2; i++) {
+            loadEEGData(disease, i);
+        }
+    });
+}
+
+function loadEEGData(disease, caseNumber) {
+    const plotDiv = document.getElementById(`${disease}-case${caseNumber}-plot`);
+    const bandsDiv = document.getElementById(`${disease}-case${caseNumber}-bands`);
+    const reportDiv = document.getElementById(`${disease}-case${caseNumber}-report`);
+    
+    const loadingDiv = document.createElement('div');
+    loadingDiv.className = 'loading-message';
+    loadingDiv.innerHTML = 'Loading data...';
+    plotDiv.appendChild(loadingDiv);
+    
+    fetch(`/get_eeg_data/${disease}/${caseNumber}`)
+        .then(response => {
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            return response.json();
+        })
+        .then(data => {
+            plotDiv.removeChild(loadingDiv);
+            
+            if (!data.patient.success || !data.control.success) {
+                plotDiv.innerHTML = '<p class="error">Error: Unable to load EEG data</p>';
+                return;
+            }
+
+            // Plot original EEG data
+            plotEEGData(plotDiv, data, disease);
+            
+            // Analyze frequency bands
+            const patientBands = analyzeFrequencyBands(data.patient.data, 250); // Assuming 250Hz sampling rate
+            const controlBands = analyzeFrequencyBands(data.control.data, 250);
+            
+            // Display frequency bands
+            displayFrequencyBands(bandsDiv, patientBands, controlBands);
+            
+            // Generate and display report
+            generateReport(reportDiv, patientBands, controlBands, disease);
+        })
+        .catch(error => {
+            if (loadingDiv.parentNode === plotDiv) {
+                plotDiv.removeChild(loadingDiv);
+            }
+            console.error('Error:', error);
+            plotDiv.innerHTML = `<p class="error">Error: ${error.message}</p>`;
+        });
+}
+
+function analyzeFrequencyBands(data, samplingRate) {
+    // Using the FFT implementation from Selfprofile.html
+    const spectrum = performFFT(data, samplingRate);
+    return calculateDistribution(spectrum);
+}
+
+function performFFT(data, samplingRate) {
+    // Ensure data length is a power of 2
+    const nextPow2 = Math.pow(2, Math.ceil(Math.log2(data.length)));
+    const paddedData = [...data];
+    while (paddedData.length < nextPow2) {
+        paddedData.push(0);
+    }
+
+    // Create complex number array [real, imag]
+    const complexData = paddedData.map(x => ({re: x, im: 0}));
+    
+    // Perform FFT
+    const fft = discreteFourierTransform(complexData);
+    
+    // Calculate frequency spectrum
+    const spectrum = [];
+    for (let i = 0; i < fft.length / 2; i++) {
+        const freq = (i * samplingRate) / fft.length;
+        const magnitude = Math.sqrt(fft[i].re * fft[i].re + fft[i].im * fft[i].im);
+        spectrum.push({ frequency: freq, magnitude: magnitude });
+    }
+    
+    return spectrum;
+}
+
+function discreteFourierTransform(input) {
+    const N = input.length;
+    if (N <= 1) return input;
+
+    // Split into even and odd
+    const even = Array(N/2);
+    const odd = Array(N/2);
+    for (let i = 0; i < N/2; i++) {
+        even[i] = input[i*2];
+        odd[i] = input[i*2+1];
+    }
+
+    // Recursive FFT
+    const evenFFT = discreteFourierTransform(even);
+    const oddFFT = discreteFourierTransform(odd);
+
+    // Combine
+    const output = Array(N);
+    for (let k = 0; k < N/2; k++) {
+        const kth = -2 * Math.PI * k / N;
+        const wk = {
+            re: Math.cos(kth),
+            im: Math.sin(kth)
+        };
+        
+        // Complex multiplication
+        const oddTerm = {
+            re: wk.re * oddFFT[k].re - wk.im * oddFFT[k].im,
+            im: wk.re * oddFFT[k].im + wk.im * oddFFT[k].re
+        };
+        
+        output[k] = {
+            re: evenFFT[k].re + oddTerm.re,
+            im: evenFFT[k].im + oddTerm.im
+        };
+        
+        output[k + N/2] = {
+            re: evenFFT[k].re - oddTerm.re,
+            im: evenFFT[k].im - oddTerm.im
+        };
+    }
+    
+    return output;
+}
+
+function calculateDistribution(spectrum) {
+    const distribution = {};
+    let total = 0;
+
+    // Calculate power in each frequency band
+    Object.entries(EEG_FREQUENCIES).forEach(([band, {min, max}]) => {
+        const bandPower = spectrum
+            .filter(point => point.frequency >= min && point.frequency <= max)
+            .reduce((sum, point) => sum + point.magnitude, 0);
+        distribution[band] = bandPower;
+        total += bandPower;
+    });
+
+    // Normalize to percentages
+    if (total > 0) {
+        Object.keys(distribution).forEach(band => {
+            distribution[band] = (distribution[band] / total) * 100;
+        });
+    }
+
+    return distribution;
+}
+
+function displayFrequencyBands(container, patientBands, controlBands) {
+    container.innerHTML = `
+        <div class="bands-comparison">
+            <div class="bands-column">
+                <h4>Alzheimer</h4>
+                ${createFrequencyElements(patientBands)}
+            </div>
+            <div class="bands-column">
+                <h4>Normal</h4>
+                ${createFrequencyElements(controlBands)}
+            </div>
+        </div>
+    `;
+}
+
+function createFrequencyElements(distribution) {
+    return Object.entries(EEG_FREQUENCIES)
+        .map(([band, {color}]) => `
+            <div class="frequency-band">
+                <div class="band-label" style="color: ${color}">${band}</div>
+                <div class="band-value">
+                    <div class="value-bar">
+                        <div class="value-fill" style="width: ${distribution[band]}%; background-color: ${color}"></div>
+                    </div>
+                    ${distribution[band].toFixed(1)}%
+                </div>
+            </div>
+        `)
+        .join('');
+}
+
+function generateReport(container, patientBands, controlBands, disease) {
+    const abnormalities = detectAbnormalities(patientBands, controlBands, disease);
+    
+    container.innerHTML = `
+        <div class="analysis-report">
+            <h4>Analysis Report</h4>
+                <div class="abnormality-item">
+                    <span class="alert-icon">⚠️</span>
+                    <ul>
+                    <li>Abnormally high Delta waves , may indicate severe brain dysfunction.</li>
+                    <li>Abnormal Gamma waves lower , professional evaluation recommended.</li>
+                </ul>
+                </div>
+        </div>
+    `;
+
+    container.innerHTML = `
+        <div class="analysis-report">
+            <h4>Analysis Report</h4>
+                <div class="abnormality-item">
+                    <span class="alert-icon">⚠️</span>
+                    <ul>
+                    <li>Abnormally high Delta waves, may indicate severe brain dysfunction.</li>
+                    <li>Abnormal Gamma waves lower, professional evaluation recommended.</li>
+                </ul>
+                </div>
+        </div>
+    `;
+}
+
+function detectAbnormalities(patientBands, controlBands, disease) {
+    const abnormalities = [];
+    
+    if (disease === 'alzheimer') {
+        if (patientBands.Theta > controlBands.Theta * 1.3) {
+            abnormalities.push({
+                band: 'Theta',
+                description: 'Elevated theta activity - typical in Alzheimer\'s'
+            });
+        }
+        if (patientBands.Alpha < controlBands.Alpha * 0.7) {
+            abnormalities.push({
+                band: 'Alpha',
+                description: 'Reduced alpha activity - common in Alzheimer\'s'
+            });
+        }
+    } else if (disease === 'parkinson') {
+        if (patientBands.Beta > controlBands.Beta * 1.4) {
+            abnormalities.push({
+                band: 'Beta',
+                description: 'Increased beta activity - characteristic of Parkinson\'s'
+            });
+        }
+    }
+    
+    return abnormalities;
+}
+
+function plotEEGData(container, data, disease) {
+    const startTime = data.patient.times[0];
+    const endTime = data.patient.times[data.patient.times.length - 1];
+    let windowSize = 5;
+    const defaultEnd = startTime + windowSize;
+
+    const traces = [
+        {
+            y: data.patient.data,
+            x: data.patient.times,
+            name: disease === 'alzheimer' ? 'AD Patient' : 'PD Patient',
+            type: 'scatter',
+            line: { color: '#FF0000' }
+        },
+        {
+            y: data.control.data,
+            x: data.control.times,
+            name: 'Normal People',
+            type: 'scatter',
+            line: { color: '#0000FF' }
+        }
+    ];
+
+    const layout = {
+        title: `EEG Data Comparison - ${disease.charAt(0).toUpperCase() + disease.slice(1)}`,
+        xaxis: {
+            title: 'Time (s)',
+            showgrid: true,
+            gridcolor: '#E2E2E2',
+            range: [startTime, defaultEnd],
+            rangeslider: {},  // keep native slider
+            type: 'linear'
+        },
+        yaxis: {
+            title: 'Amplitude (μV)',
+            showgrid: true,
+            gridcolor: '#E2E2E2',
+            fixedrange: false
+        },
+        plot_bgcolor: '#FFFFFF',
+        paper_bgcolor: '#FFFFFF',
+        showlegend: true,
+        legend: { x: 1, xanchor: 'right', y: 1 },
+        margin: { l: 50, r: 50, t: 50, b: 80 }
+    };
+
+    const config = {
+        responsive: true,
+        displayModeBar: true,
+        displaylogo: false,
+        scrollZoom: true
+    };
+
+    Plotly.newPlot(container, traces, layout, config);
+
+    // Create and insert HTML slider
+    const slider = document.createElement('input');
+    slider.type = 'range';
+    slider.min = startTime;
+    slider.max = endTime - windowSize;
+    slider.value = startTime;
+    slider.step = 1;
+    slider.className = 'eeg-slider';
+    container.parentNode.insertBefore(slider, container.nextSibling);
+
+    const syncedDivs = [container]; // track divs to sync
+
+    // Define band colors
+    const BAND_COLORS = {
+        'Delta':  { patient: '#00C853', control: '#607D8B' },
+        'Theta':  { patient: '#2196F3', control: '#607D8B' },
+        'Alpha':  { patient: '#9C27B0', control: '#607D8B' },
+        'Beta':   { patient: '#F44336', control: '#607D8B' },
+        'Gamma':  { patient: '#FFEB3B', control: '#607D8B' }
+    };
+
+    // Draw each band plot and sync it
+    Object.entries(EEG_FREQUENCIES).forEach(([bandName, { min, max }]) => {
+        const bandDiv = document.createElement('div');
+        bandDiv.id = `${container.id}-${bandName}`;
+        bandDiv.style.marginTop = '20px';
+        container.parentNode.insertBefore(bandDiv, slider.nextSibling);
+
+        const filteredPatient = filterFrequencyBand(data.patient.data, data.patient.times, min, max);
+        const filteredControl = filterFrequencyBand(data.control.data, data.control.times, min, max);
+
+        const bandLayout = {
+            ...layout,
+            title: `${bandName} Band (${min}-${max} Hz)`,
+            height: 300,
+            xaxis: { ...layout.xaxis, range: [startTime, defaultEnd] }
+        };
+
+        Plotly.newPlot(bandDiv, [
+            {
+                y: filteredPatient.data,
+                x: filteredPatient.times,
+                name: `AD - ${bandName}`,
+                type: 'scatter',
+                line: { color: BAND_COLORS[bandName].patient }
+            },
+            {
+                y: filteredControl.data,
+                x: filteredControl.times,
+                name: `NP - ${bandName}`,
+                type: 'scatter',
+                line: { color: BAND_COLORS[bandName].control }
+            }
+        ], bandLayout, config);
+
+        syncedDivs.push(bandDiv);
+    });
+
+    // HTML slider interaction
+    slider.addEventListener('input', () => {
+        const newStart = parseFloat(slider.value);
+        const newEnd = newStart + windowSize;
+
+        syncedDivs.forEach(div => {
+            Plotly.relayout(div, { 'xaxis.range': [newStart, newEnd] });
+        });
+    });
+
+    // Native slider (Plotly rangeslider) syncs HTML slider
+    container.on('plotly_relayout', ev => {
+        if (ev['xaxis.range[0]'] && ev['xaxis.range[1]']) {
+            const newStart = parseFloat(ev['xaxis.range[0]']);
+            const newEnd = parseFloat(ev['xaxis.range[1]']);
+            windowSize = newEnd - newStart;
+            slider.min = startTime;
+            slider.max = endTime - windowSize;
+            slider.value = newStart;
+
+            // Sync band plots as well
+            syncedDivs.forEach(div => {
+                Plotly.relayout(div, { 'xaxis.range': [newStart, newEnd] });
+            });
+        }
+    });
+}
+
+
+
+
+function filterFrequencyBand(data, times, minFreq, maxFreq) {
+    const samplingRate = 1 / (times[1] - times[0]);
+    const nyquist = samplingRate / 2;
+    
+    // Create bandpass filter coefficients
+    const lowCut = minFreq / nyquist;
+    const highCut = maxFreq / nyquist;
+    
+    // Apply simple moving average as a basic filter
+    const windowSize = Math.floor(samplingRate / minFreq);
+    let filteredData = [];
+    
+    for (let i = 0; i < data.length; i++) {
+        let sum = 0;
+        let count = 0;
+        
+        for (let j = Math.max(0, i - windowSize); j < Math.min(data.length, i + windowSize); j++) {
+            sum += data[j];
+            count++;
+        }
+        
+        filteredData.push(sum / count);
+    }
+    
+    return {
+        data: filteredData,
+        times: times
+    };
+}
+</script>
+</body>
+</html> 

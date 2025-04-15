@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>User Profile & EEG Analysis</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/stylesProfile.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="header1"><h1>MindWave<img src="{{ url_for('static', filename='photo/mindwave_logo.png') }}" alt="Logo"></h1></div>
+    <div class="nav-buttons">
+        <button onclick="window.location.href='{{ url_for('home') }}'">Home</button>
+        <button onclick="window.location.href='{{ url_for('online_data') }}'">Online Data</button>
+        <button onclick="window.location.href='{{ url_for('profile') }}'">MyData</button>
+        <button onclick="window.location.href='{{ url_for('ai_alzheimer_detection') }}'">AI Alzheimer Detection</button>
+        <button onclick="window.location.href='{{ url_for('chatbot') }}'">AI Helper</button>
+        <button onclick="window.location.href='{{ url_for('about_us') }}'">About Us</button>
+        <button onclick="window.location.href='{{ url_for('login') }}'">Logout</button>
+    </div>
+    <div class="maincontent"> 
+       <div class="container">       
+            <div class="header">
+                <h1>User Profile</h1>
+                <p>View personal details and health suggestions based on brainwave analysis</p>
+            </div>
+            <div class="user-info">
+               <div class="user-card">
+                    <h3>Full Name</h3>
+                    <p>{{ user['full_name'] }}</p>
+                </div>
+                <div class="user-card">
+                    <h3>Email</h3>
+                    <p>{{ user['email'] }}</p>
+                </div>
+                <div class="user-card">
+                    <h3>Phone</h3>
+                    <p>{{ user['phone'] }}</p>
+                </div>
+                <div class="user-card">
+                    <h3>Age</h3>
+                    <p>{{ user['age'] }} Years</p>
+                </div>
+                <div class="user-card">
+                    <h3>Gender</h3>
+                    <p>{{ user['gender'] }}</p>
+                </div>
+            </div>        
+
+            <div class="upload-section">
+                <input type="file" id="fileInput" accept=".csv, .txt" hidden>
+                <label for="fileInput" class="custom-upload">Upload EEG File</label>
+                <span id="fileName"></span>
+                <div class="error-message" id="errorMsg"></div>
+            </div>
+
+            <div class="charts-container" id="chartsContainer"></div>
+
+            <div class="analysis-section">
+                <h2>Frequency Distribution</h2>
+                <div id="frequencyAnalysis"></div>
+                <h2 style="margin-top: 30px;">Statistical Report</h2>
+                <div class="report-stats" id="statisticalReport"></div>
+                <button id="geminiAnalysisBtn" style="margin-top:20px; padding:10px; background-color:#4CAF50; color:white; border:none; border-radius:5px; cursor:pointer;">
+                     show detail report
+                </button>
+                <div id="aiAnalysisResult" style="margin-top:15px; padding:10px; background:#f0f4f8; border-radius:5px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentAnalysis = null;
+        const EEG_FREQUENCIES = {
+            'Delta': { min: 0.5, max: 4, color: '#2ecc71' },
+            'Theta': { min: 4, max: 8, color: '#3498db' },
+            'Alpha': { min: 8, max: 13, color: '#9b59b6' },
+            'Beta':  { min: 13, max: 30, color: '#e74c3c' },
+            'Gamma': { min: 30, max: 50, color: '#f1c40f' }
+        };
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // localStorage.removeItem('eegAnalysisData');
+            loadSavedData();
+        });
+
+        // Load saved data from server or local storage
+        async function loadSavedData() {
+            try {
+                // Try server first
+                const response = await fetch("{{ url_for('get_analysis') }}");
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    loadSavedAnalysis(data.data);
+                    localStorage.setItem('eegAnalysisData', JSON.stringify(data.data));
+                    return;
+                }
+                
+                // Fallback to local storage
+                const savedData = localStorage.getItem('eegAnalysisData');
+                if (savedData) {
+                    loadSavedAnalysis(JSON.parse(savedData));
+                }
+            } catch (error) {
+                console.error('Error loading saved data:', error);
+                const savedData = localStorage.getItem('eegAnalysisData');
+                if (savedData) {
+                    loadSavedAnalysis(JSON.parse(savedData));
+                }
+            }
+        }
+
+        // Load and render saved analysis
+        function loadSavedAnalysis(savedData) {
+            if (!savedData) return;
+            
+            currentAnalysis = savedData;
+            
+            // Restore filename
+            if (savedData.fileInfo) {
+                document.getElementById('fileName').textContent = savedData.fileInfo.name;
+            }
+            
+            // Restore charts
+            if (savedData.charts) {
+                renderCharts(savedData.charts);
+            }
+            
+            // Restore analysis
+            if (savedData.analysis) {
+                renderAnalysisResults(savedData.analysis);
+            }
+        }
+
+        // File upload handler
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            clearPreviousData();
+            document.getElementById('fileName').textContent = `${file.name} (${(file.size/1024).toFixed(2)}KB)`;
+
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                try {
+                    const analysisResult = performFullAnalysis(e.target.result);
+                    
+                    // Prepare data to save
+                    const saveData = {
+                        fileInfo: {
+                            name: file.name,
+                            size: file.size,
+                            lastModified: file.lastModified
+                        },
+                        charts: generateChartData(analysisResult),
+                        analysis: analysisResult.analysis,
+                        timestamp: new Date().toISOString()
+                    };
+                    
+                    // Save to localStorage immediately
+                    localStorage.setItem('eegAnalysisData', JSON.stringify(saveData));
+                    
+                    // Save to server
+                    await saveAnalysisResult(saveData);
+                    
+                    // Render results
+                    loadSavedAnalysis(saveData);
+                } catch (error) {
+                    showError(`Analysis failed: ${error.message}`);
+                }
+            };
+            reader.readAsText(file);
+        });
+
+        // Perform full EEG analysis
+        function performFullAnalysis(rawData) {
+            try {
+                const lines = rawData.split('\n').filter(line => line.trim() !== '');
+                if (lines.length < 2) throw new Error('File must have at least 2 lines (header + data)');
+
+                const headers = lines[0].split(',').map(h => h.trim());
+                const data = lines.slice(1).map(line => {
+                    return line.split(',').map(v => parseFloat(v.trim()));
+                }).filter(row => row.length === headers.length && !row.some(isNaN));
+
+                if (data.length < 32) throw new Error('At least 32 valid data samples required');
+
+                const samplingRate = 250; // Hz
+                const analysisResults = {};
+                
+                headers.forEach((header, index) => {
+                    const channelData = data.map(row => row[index]);
+                    const spectrum = performFFT(channelData, samplingRate);
+                    const distribution = calculateDistribution(spectrum);
+                    
+                    analysisResults[header] = {
+                        distribution: distribution,
+                        stats: calculateStatistics(distribution),
+                        healthReport: NeuroHealthAnalyzer.analyze(distribution)
+                    };
+                });
+
+                return {
+                    headers: headers,
+                    data: data,
+                    analysis: analysisResults
+                };
+            } catch (error) {
+                console.error('Analysis error:', error);
+                throw new Error(`Analysis failed: ${error.message}`);
+            }
+        }
+
+        // Generate chart data
+        function generateChartData(analysisResult) {
+            return analysisResult.headers.map((header, index) => ({
+                label: header,
+                data: analysisResult.data.map(row => row[index]),
+                borderColor: getColor(index),
+                borderWidth: 1.5,
+                pointRadius: 0,
+                tension: 0.1
+            }));
+        }
+
+        // Render EEG charts
+        function renderCharts(chartData) {
+            const container = document.getElementById('chartsContainer');
+            container.innerHTML = '';
+            
+            chartData.forEach((dataset, index) => {
+                const chartBox = document.createElement('div');
+                chartBox.className = 'chart-box';
+                chartBox.innerHTML = `<h3>${dataset.label}</h3><canvas id="chart${index}"></canvas>`;
+                container.appendChild(chartBox);
+
+                const ctx = chartBox.querySelector('canvas').getContext('2d');
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: dataset.data.map((_, i) => i + 1),
+                        datasets: [dataset]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            y: { beginAtZero: false }
+                        }
+                    }
+                });
+            });
+        }
+
+        // Render analysis results
+        function renderAnalysisResults(analysis) {
+            const analysisDiv = document.getElementById('frequencyAnalysis');
+            const reportDiv = document.getElementById('statisticalReport');
+            
+            analysisDiv.innerHTML = '';
+            reportDiv.innerHTML = '';
+
+            Object.entries(analysis).forEach(([header, result]) => {
+                // Frequency distribution
+                const freqCard = document.createElement('div');
+                freqCard.className = 'metric-card';
+                freqCard.innerHTML = `
+                    <h3>${header} Frequency Distribution</h3>
+                    ${createFrequencyElements(result.distribution)}
+                `;
+                analysisDiv.appendChild(freqCard);
+
+                // Statistics
+                const statCard = document.createElement('div');
+                statCard.className = 'stat-card';
+                statCard.innerHTML = `
+                    <h3>${header} Statistics</h3>
+                    <p>Peak frequency: ${result.stats.max.name} (${result.stats.max.value.toFixed(2)}%)</p>
+                    <p>Minimum frequency: ${result.stats.min.name} (${result.stats.min.value.toFixed(2)}%)</p>
+                    <div class="health-description">
+                        <strong>Health Analysis:</strong> ${generateHealthDescription(result.distribution)}
+                    </div>
+                `;
+                reportDiv.appendChild(statCard);
+
+                // Health reports
+                if (result.healthReport && result.healthReport.length > 0) {
+                    const reportCard = document.createElement('div');
+                    reportCard.className = 'disease-card';
+                    reportCard.innerHTML = `
+                        <h3>${header} Anomaly Detection</h3>
+                        ${result.healthReport.map(report => `
+                            <div class="disease-item">
+                                <div class="disease-header">
+                                    <span class="alert-icon">⚠️</span>
+                                    ${report.disease}
+                                </div>
+                                <div class="biomarkers">
+                                    <strong>Biomarkers:</strong>
+                                    ${report.biomarkers.join('; ')}
+                                </div>
+                                <div class="reference">
+                                    ${report.reference}
+                                </div>
+                            </div>
+                        `).join('')}
+                    `;
+                    reportDiv.appendChild(reportCard);
+                }
+            });
+
+            // Add disclaimer
+            const disclaimer = document.createElement('div');
+            disclaimer.className = 'disclaimer-box';
+            disclaimer.innerHTML = `
+                <h4><span class="disclaimer-icon">⚠️</span>Important Notice</h4>
+                <ul>
+                    <li>This analysis result is automatically generated and cannot be used for clinical diagnosis</li>
+                    <li>Data interpretation is for reference only</li>
+                    <li>Results will be automatically deleted after 24 hours</li>
+                </ul>
+                <p style="margin:0;">© 2025 MindWave Neural Analysis System</p>
+            `;
+            reportDiv.appendChild(disclaimer);
+        }
+
+        // FFT implementation
+        class FFT {
+            static fft(signal) {
+                const N = signal.length;
+                if (N <= 1) return signal;
+
+                const even = [], odd = [];
+                for (let i = 0; i < N; i += 2) {
+                    even.push(signal[i]);
+                    (i + 1 < N) && odd.push(signal[i + 1]);
+                }
+
+                const evenTransformed = FFT.fft(even);
+                const oddTransformed = FFT.fft(odd);
+                const output = new Array(N);
+
+                for (let k = 0; k < N/2; k++) {
+                    const angle = -2 * Math.PI * k / N;
+                    const twiddle = [Math.cos(angle), Math.sin(angle)];
+                    const oddK = oddTransformed[k] || [0, 0];
+                    const evenK = evenTransformed[k] || [0, 0];
+
+                    const term = [
+                        twiddle[0] * oddK[0] - twiddle[1] * oddK[1],
+                        twiddle[0] * oddK[1] + twiddle[1] * oddK[0]
+                    ];
+
+                    output[k] = [
+                        evenK[0] + term[0],
+                        evenK[1] + term[1]
+                    ];
+
+                    output[k + N/2] = [
+                        evenK[0] - term[0],
+                        evenK[1] - term[1]
+                    ];
+                }
+                return output;
+            }
+        }
+
+        // Perform FFT on data
+        function performFFT(data, samplingRate) {
+            if (data.length < 32) {
+                console.warn('Padding data to 32 samples');
+                while (data.length < 32) data.push(0);
+            }
+
+            const N = Math.pow(2, Math.floor(Math.log2(data.length)));
+            const trimmedData = data.slice(0, N);
+            const complexData = trimmedData.map(x => [x, 0]);
+            const phasors = FFT.fft(complexData);
+
+            const spectrum = [];
+            for (let i = 0; i < N/2; i++) {
+                const freq = (i * samplingRate) / N;
+                const re = phasors[i][0] || 0;
+                const im = phasors[i][1] || 0;
+                const magnitude = Math.sqrt(re*re + im*im);
+                spectrum.push({ frequency: freq, magnitude: magnitude });
+            }
+            return spectrum;
+        }
+
+        // Calculate frequency distribution
+        function calculateDistribution(spectrum) {
+            const distribution = {};
+            let total = 0;
+
+            Object.entries(EEG_FREQUENCIES).forEach(([name, { min, max }]) => {
+                const sum = spectrum
+                    .filter(bin => bin.frequency >= min && bin.frequency <= max)
+                    .reduce((a, b) => a + b.magnitude, 0);
+                distribution[name] = sum;
+                total += sum;
+            });
+
+            if (total > 0) {
+                Object.keys(distribution).forEach(k => {
+                    distribution[k] = (distribution[k] / total) * 100;
+                });
+            }
+            return distribution;
+        }
+
+        // Create frequency distribution bars
+        function createFrequencyElements(distribution) {
+            return Object.entries(distribution).map(([name, value]) => `
+                <div class="frequency-item" style="border-color: ${EEG_FREQUENCIES[name].color}">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                        <span style="font-weight: 500;">${name}</span>
+                        <span style="color: #666;">${value.toFixed(1)}%</span>
+                    </div>
+                    <div class="value-bar">
+                        <div class="value-fill" 
+                            style="width: ${value.toFixed(1)}%;
+                                background: ${EEG_FREQUENCIES[name].color};">
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Calculate statistics
+        function calculateStatistics(distribution) {
+            const entries = Object.entries(distribution);
+            if (entries.length === 0) return { max: { value: 0, name: 'N/A' }, min: { value: 0, name: 'N/A' } };
+
+            const maxEntry = entries.reduce((a, b) => a[1] > b[1] ? a : b);
+            const minEntry = entries.reduce((a, b) => a[1] < b[1] ? a : b);
+
+            return {
+                max: { value: maxEntry[1], name: maxEntry[0] },
+                min: { value: minEntry[1], name: minEntry[0] }
+            };
+        }
+
+        // Health analyzer
+        class NeuroHealthAnalyzer {
+            static patterns = {
+                AD: {
+                    name: "Alzheimer's disease tendency",
+                    criteria: (dist) => dist.Theta > 35 && dist.Alpha < 30,
+                    ref: "Babiloni C, et al. (2020). Neurobiology of Aging 90:43-59",
+                    markers: ["Theta increase", "Alpha decrease"]
+                },
+                PD: {
+                    name: "Parkinson's disease pattern",
+                    criteria: (dist) => dist.Beta > 40 && dist.Gamma < 15,
+                    ref: "Little S, et al. (2016). J Neurol Neurosurg Psychiatry 87(7):717-721",
+                    markers: ["Beta increase"]
+                },
+                EP: {
+                    name: "Epileptiform activity",
+                    criteria: (dist) => dist.Gamma > 25 && dist.Beta > 35,
+                    ref: "van Mierlo P, et al. (2014). Prog Neurobiol 121:19-35",
+                    markers: ["Gamma-Beta coupling"]
+                }
+            };
+
+            static analyze(distribution) {
+                const reports = [];
+                Object.entries(this.patterns).forEach(([key, pattern]) => {
+                    if (pattern.criteria(distribution)) {
+                        reports.push({
+                            disease: pattern.name,
+                            biomarkers: pattern.markers,
+                            reference: pattern.ref
+                        });
+                    }
+                });
+                return reports;
+            }
+        }
+
+        // Generate health description
+        function generateHealthDescription(distribution) {
+            const messages = [];
+            const ranges = {
+                Delta: { normalMax: 5, danger: 10 },
+                Theta: { normalMax: 8, danger: 15 },
+                Alpha: { normalMin: 8, normalMax: 13, danger: 30 },
+                Beta: { normalMax: 30, danger: 40 },
+                Gamma: { danger: 25 }
+            };
+
+            if (distribution.Delta > ranges.Delta.danger) {
+                messages.push(`Abnormally high Delta waves (${distribution.Delta.toFixed(1)}%), may indicate severe brain dysfunction.`);
+            } else if (distribution.Delta > ranges.Delta.normalMax) {
+                messages.push(`Elevated Delta waves (${distribution.Delta.toFixed(1)}%), check sleep quality.`);
+            }
+
+            if (distribution.Theta > ranges.Theta.danger) {
+                messages.push(`Dangerously high Theta waves (${distribution.Theta.toFixed(1)}%), may reflect cognitive impairment.`);
+            } else if (distribution.Theta > ranges.Theta.normalMax) {
+                messages.push(`Mild Theta elevation (${distribution.Theta.toFixed(1)}%), may be normal in relaxed state.`);
+            }
+
+            if (distribution.Alpha > ranges.Alpha.danger) {
+                messages.push(`Abnormally high Alpha waves (${distribution.Alpha.toFixed(1)}%).`);
+            } else if (distribution.Alpha < ranges.Alpha.normalMin) {
+                messages.push(`Low Alpha waves (${distribution.Alpha.toFixed(1)}%), may indicate stress.`);
+            }
+
+            if (distribution.Beta > ranges.Beta.danger) {
+                messages.push(`Excessive Beta waves (${distribution.Beta.toFixed(1)}%), may indicate anxiety.`);
+            } else if (distribution.Beta > ranges.Beta.normalMax) {
+                messages.push(`High Beta waves (${distribution.Beta.toFixed(1)}%), may reflect concentration.`);
+            }
+
+            if (distribution.Gamma > ranges.Gamma.danger) {
+                messages.push(`Abnormal Gamma waves (${distribution.Gamma.toFixed(1)}%), professional evaluation recommended.`);
+            }
+
+            return messages.length > 0 ? messages.join(' ') : "All frequency bands within normal ranges.";
+        }
+
+        // Save analysis to server
+        async function saveAnalysisResult(result) {
+            try {
+                const response = await fetch("{{ url_for('save_analysis') }}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify(result)
+                });
+                return await response.json();
+            } catch (error) {
+                console.error('Error saving analysis:', error);
+                return { status: 'error', message: error.message };
+            }
+        }
+
+        // Helper functions
+        function getColor(index) {
+            const colors = ['#5B86E5', '#36D1DC', '#FF6B6B', '#4CAF50', '#9C27B0'];
+            return colors[index % colors.length];
+        }
+
+        function clearPreviousData() {
+            document.getElementById('errorMsg').style.display = 'none';
+            document.getElementById('chartsContainer').innerHTML = '';
+            document.getElementById('frequencyAnalysis').innerHTML = '';
+            document.getElementById('statisticalReport').innerHTML = '';
+        }
+
+        function showError(message) {
+            const errorElement = document.getElementById('errorMsg');
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+            errorElement.style.color = '#e74c3c';
+        }
+        document.getElementById('geminiAnalysisBtn').addEventListener('click', function() {
+            if (!currentAnalysis || !currentAnalysis.analysis) {
+                alert("Please upload and analyze an EEG file first.");
+                return;
+            }
+
+            const apiKey = 'AIzaSyCzK7dGtaAw4ihPNAIQLS3OnMKMyh4mz2w'; // Your provided API key
+            const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+            let aiPrompt = 'Given the following EEG frequency distribution analysis:\n\n';
+            Object.entries(currentAnalysis.analysis).forEach(([channel, result]) => {
+                aiPrompt += `${channel} Frequency Distribution:\n`;
+                Object.entries(result.distribution).forEach(([freq, percent]) => {
+                    aiPrompt += `- ${freq}: ${percent.toFixed(1)}%\n`;
+                });
+                aiPrompt += '\n';
+            });
+            aiPrompt += 'Based on these EEG frequency distributions (Delta, Theta, Alpha, Beta, Gamma), please explain clearly what potential health states or concerns might be indicated by these findings.';
+
+            fetch(endpoint, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    contents: [{parts: [{text: aiPrompt}]}]
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.candidates && data.candidates.length > 0) {
+                    const aiResponse = data.candidates[0].content.parts[0].text;
+                    document.getElementById('aiAnalysisResult').innerHTML = aiResponse.replace(/\n/g, '<br>');
+                } else {
+                    document.getElementById('aiAnalysisResult').innerHTML = 'AI did not provide a valid response.';
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                document.getElementById('aiAnalysisResult').innerHTML = 'Error fetching AI analysis: ' + err.message;
+            });
+        });
+    </script>
+</body>
+</html>
